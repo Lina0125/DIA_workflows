@@ -54,7 +54,6 @@ rule move_mzML_files:
         cp {input} {output}
         """
 
-#already done
 rule raw_to_mzML:
     params:
         input_dir = "/mnt/external/dia_data/s-trap/RAW/"
