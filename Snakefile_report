@@ -1,0 +1,69 @@
+'''
+Environment and software support:
+    java
+    msconvert
+    docker
+    encyclopedia-0.9.5-executable.jar
+
+Setting for workdir:
+/mnt/external/dia_data/
+    Snakefile
+    uniprot_human_25apr2019.fasta
+    uniprot_human_25apr2019.fasta.z2_nce33.dlib
+    bin /
+        encyclopedia-0.9.5-executable.jar
+    s-trap /
+        RAW /
+            190529_Plasma_S-Trap_DIA_FullWindow_01.raw
+            190529_Plasma_S-Trap_DIA_FullWindow_02.raw
+            190529_Plasma_S-Trap_DIA_FullWindow_03.raw
+    run-encyclopedia /
+
+'''
+
+ids = ['190529_Plasma_S-Trap_DIA_FullWindow_01',
+'190529_Plasma_S-Trap_DIA_FullWindow_02',
+'190529_Plasma_S-Trap_DIA_FullWindow_03']
+
+
+rule generate_quantitative_reports:
+    params:
+        input_mzML_dir = "/mnt/external/dia_data/run-encyclopedia",
+        input_fasta_file = "/mnt/external/dia_data/uniprot_human_25apr2019.fasta",
+        input_dlib_file = "/mnt/external/dia_data/uniprot_human_25apr2019.fasta.z2_nce33.dlib",
+        input_software = "/mnt/external/dia_data/bin/encyclopedia-0.9.5-executable.jar",
+        output_files = "raw_uniprot_encyclopedia"
+    input:
+        expand("/mnt/external/dia_data/run-encyclopedia/{id}.mzML",id=ids)
+    output:
+        "/mnt/external/dia_data/run-encyclopedia/raw_uniprot_encyclopedia_peptides.txt"
+    shell:
+        """
+        cd {params.input_mzML_dir};
+        java -Xmx8g -jar {params.input_software} -i {input} -l {params.input_dlib_file} -f {params.input_fasta_file};
+        java -jar -Xmx8g {params.input_software} -libexport -i {params.input_mzML_dir} -l {params.input_dlib_file} -f {params.input_fasta_file} -o {params.output_files} -a true
+        """
+
+rule move_mzML_files:
+    input:
+        expand("/mnt/external/dia_data/s-trap/RAW/{id}.mzML",id=ids)
+    output:
+        expand("/mnt/external/dia_data/run-encyclopedia/{id}.mzML",id=ids)
+    shell:
+        """
+        cp {input} {output}
+        """
+
+#already done
+rule raw_to_mzML:
+    params:
+        input_dir = "/mnt/external/dia_data/s-trap/RAW/"
+    input:
+        expand("/mnt/external/dia_data/s-trap/RAW/{id}.raw",id=ids)
+    output:
+        expand("/mnt/external/dia_data/s-trap/RAW/{id}.mzML",id=ids)
+    shell:
+        """
+        cd {params.input_dir};
+        sudo docker run -it --rm -e WINEDEBUG=-all -v {params.input_dir}:/data chambm/pwiz-skyline-i-agree-to-the-vendor-licenses wine msconvert --mzML *.raw --filter="peakPicking true 1-q" --filter="demultiplex massError=10ppm optimization=overlap_only"
+        """

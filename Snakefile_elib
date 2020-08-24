@@ -1,0 +1,50 @@
+ids = ['190529_Plasma_S-Trap_DIA_FullWindow_01',
+'190529_Plasma_S-Trap_DIA_FullWindow_02',
+'190529_Plasma_S-Trap_DIA_FullWindow_03',
+'190529_Plasma_S-Trap_DIA_Window400_500_01',
+'190529_Plasma_S-Trap_DIA_Window500_600_01',
+'190529_Plasma_S-Trap_DIA_Window600_700_01',
+'190529_Plasma_S-Trap_DIA_Window700_800_01',
+'190529_Plasma_S-Trap_DIA_Window800_900_01',
+'190529_Plasma_S-Trap_DIA_Window900_1000_01']
+
+
+rule generate_elib_file:
+    params:
+        input_mzML_dir = "dia_data/s-trap/try_mzML",
+        input_fasta_file = "dia_data/uniprot_human_25apr2019.fasta",
+        input_dlib_file = "dia_data/uniprot_human_25apr2019.fasta.z2_nce33.dlib",
+        input_software = "dia_data/bin/encyclopedia-0.9.5-executable.jar"
+    input:
+        input_mzML_files = expand("dia_data/s-trap/try_mzML/{id}.mzML",id=ids)
+    output:
+        "dia_data/uniprot_human_25apr2019.elib"
+    shell:
+        """
+        java -Xmx8g -jar {params.input_software} -i {input.input_mzML_files} -l {params.input_dlib_file} -f {params.input_fasta_file};
+        java -jar -Xmx8g {params.input_software} -libexport -i {params.input_mzML_dir} -l {params.input_dlib_file} -f {params.input_fasta_file} -o {output} -a false
+        """
+
+rule move_mzML_files:
+    input:
+        "dia_data/s-trap/RAW/{id}.mzML"
+    output:
+        "dia_data/s-trap/try_mzML/{id}.mzML"
+    shell:
+        """
+        cp {input} {output}
+        """
+
+#already done
+rule raw_to_mzML:
+    params:
+        input_dir = "/mnt/external/dia_data/s-trap/RAW/"
+    input:
+        expand("dia_data/s-trap/RAW/{id}.raw",id=ids)
+    output:
+        expand("dia_data/s-trap/RAW/{id}.mzML",id=ids)
+    shell:
+        """
+        cd {params.input_dir};
+        sudo docker run -it --rm -e WINEDEBUG=-all -v {params.input_dir}:/data chambm/pwiz-skyline-i-agree-to-the-vendor-licenses wine msconvert --mzML *.raw --filter="peakPicking true 1-q" --filter="demultiplex massError=10ppm optimization=overlap_only"
+        """
