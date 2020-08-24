@@ -1,3 +1,31 @@
+'''
+Environment and software support:
+   java
+   msconvert
+   docker
+   encyclopedia-0.9.5-executable.jar
+
+ Setting for workdir:
+/mnt/external
+   Snakefile
+   dia_data/
+       uniprot_human_25apr2019.fasta
+       uniprot_human_25apr2019.fasta.z2_nce33.dlib
+       bin /
+           encyclopedia-0.9.5-executable.jar
+       s-trap /
+           RAW /
+               190529_Plasma_S-Trap_DIA_FullWindow_01.raw
+               190529_Plasma_S-Trap_DIA_FullWindow_02.raw
+               190529_Plasma_S-Trap_DIA_FullWindow_03.raw
+               190529_Plasma_S-Trap_DIA_Window400_500_01.raw
+               190529_Plasma_S-Trap_DIA_Window500_600_01.raw
+               190529_Plasma_S-Trap_DIA_Window600_700_01.raw
+               190529_Plasma_S-Trap_DIA_Window700_800_01.raw
+               190529_Plasma_S-Trap_DIA_Window800_900_01.raw
+               190529_Plasma_S-Trap_DIA_Window900_1000_01.raw
+'''
+
 ids = ['190529_Plasma_S-Trap_DIA_FullWindow_01',
 '190529_Plasma_S-Trap_DIA_FullWindow_02',
 '190529_Plasma_S-Trap_DIA_FullWindow_03',
@@ -16,11 +44,12 @@ rule generate_elib_file:
         input_dlib_file = "dia_data/uniprot_human_25apr2019.fasta.z2_nce33.dlib",
         input_software = "dia_data/bin/encyclopedia-0.9.5-executable.jar"
     input:
-        input_mzML_files = expand("dia_data/s-trap/try_mzML/{id}.mzML",id=ids)
+        input_mzML_files = expand("dia_data/s-trap/mzML/{id}.mzML",id=ids)
     output:
         "dia_data/uniprot_human_25apr2019.elib"
     shell:
         """
+        cd {params.input_mzML_dir};
         java -Xmx8g -jar {params.input_software} -i {input.input_mzML_files} -l {params.input_dlib_file} -f {params.input_fasta_file};
         java -jar -Xmx8g {params.input_software} -libexport -i {params.input_mzML_dir} -l {params.input_dlib_file} -f {params.input_fasta_file} -o {output} -a false
         """
@@ -29,13 +58,12 @@ rule move_mzML_files:
     input:
         "dia_data/s-trap/RAW/{id}.mzML"
     output:
-        "dia_data/s-trap/try_mzML/{id}.mzML"
+        "dia_data/s-trap/mzML/{id}.mzML"
     shell:
         """
         cp {input} {output}
         """
 
-#already done
 rule raw_to_mzML:
     params:
         input_dir = "/mnt/external/dia_data/s-trap/RAW/"
