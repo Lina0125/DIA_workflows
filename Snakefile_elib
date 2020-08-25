@@ -39,7 +39,7 @@ ids = ['190529_Plasma_S-Trap_DIA_FullWindow_01',
 
 rule generate_elib_file:
     params:
-        input_mzML_dir = "dia_data/s-trap/try_mzML",
+        input_mzML_dir = "dia_data/s-trap/mzML",
         input_fasta_file = "dia_data/uniprot_human_25apr2019.fasta",
         input_dlib_file = "dia_data/uniprot_human_25apr2019.fasta.z2_nce33.dlib",
         input_software = "dia_data/bin/encyclopedia-0.9.5-executable.jar"
