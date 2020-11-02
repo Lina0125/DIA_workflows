@@ -26,15 +26,15 @@ Environment and software support:
                190529_Plasma_S-Trap_DIA_Window900_1000_01.raw
 '''
 
-ids = ['190529_Plasma_S-Trap_DIA_FullWindow_01',
-'190529_Plasma_S-Trap_DIA_FullWindow_02',
-'190529_Plasma_S-Trap_DIA_FullWindow_03',
-'190529_Plasma_S-Trap_DIA_Window400_500_01',
-'190529_Plasma_S-Trap_DIA_Window500_600_01',
-'190529_Plasma_S-Trap_DIA_Window600_700_01',
-'190529_Plasma_S-Trap_DIA_Window700_800_01',
-'190529_Plasma_S-Trap_DIA_Window800_900_01',
-'190529_Plasma_S-Trap_DIA_Window900_1000_01']
+def file_name(file_dir):
+   ids=[]
+   for root, dirs, files in os.walk(file_dir):
+      for file in files:
+         if os.path.splitext(file)[1] == '.raw':
+            ids.append(file.split('.')[0])
+      return ids
+
+ids = file_name("/mnt/external/dia_data/s-trap/Library_Generation/")
 
 
 rule generate_elib_file:
