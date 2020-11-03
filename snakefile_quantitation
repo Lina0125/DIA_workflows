@@ -1,0 +1,69 @@
+'''
+Environment and software support:
+    java
+    msconvert
+    docker
+    encyclopedia-0.9.5-executable.jar
+
+Setting for workdir:
+/mnt/external/dia_data/
+    uniprot_human_25apr2019.fasta
+    uniprot_human_25apr2019.fasta.z2_nce33.dlib
+    bin /
+        encyclopedia-0.9.5-executable.jar
+    s-trap /
+        Snakefile
+        Quantitative_results /
+            190529_Plasma_S-Trap_DIA_FullWindow_01.raw
+            190529_Plasma_S-Trap_DIA_FullWindow_02.raw
+            190529_Plasma_S-Trap_DIA_FullWindow_03.raw
+'''
+# Get quantitative analysis directory
+dir =  os.environ.get("Quantitation_dir")
+
+# Define a function used to generate library 
+def file_name(file_dir):
+    ids=[]
+    for root, dirs, files in os.walk(file_dir):
+        for file in files:
+            if os.path.splitext(file)[1] == '.raw':
+                ids.append(file.split('.')[0])
+    return ids
+
+# Get file name
+ids = file_name(dir)
+
+# Get quantitative results
+rule generate_quantitative_reports:
+    params:
+        input_mzML_dir = dir,
+        input_fasta_file = "ref/uniprot_human_25apr2019.fasta",
+        input_dlib_file = "ref/uniprot_human_25apr2019.fasta.z2_nce33.dlib",
+        input_software = "bin/encyclopedia-0.9.5-executable.jar",
+        output_files = "Encyclopedia"
+    input:
+        expand(dir+"{id}.mzML",id=ids)
+    output:
+        dir+"/Encyclopedia.peptides.txt",
+        dir+"/Encyclopedia.proteins.txt"
+    shell:
+        """
+        cd {params.input_mzML_dir};
+        java -Xmx8g -jar {params.input_software} -i {params.input_mzML_dir} -l {params.input_dlib_file} -f {params.input_fasta_file};
+        java -jar -Xmx8g {params.input_software} -libexport -i {params.input_mzML_dir} -l {params.input_dlib_file} -f {params.input_fasta_file} -o {params.output_files} -a true
+        """
+
+# Convert raw DIA data to mzML file
+rule raw_to_mzML:
+    params:
+        input_dir = dir
+    input:
+        expand(dir+"{id}.raw",id=ids)
+    output:
+        expand(dir+"{id}.mzML",id=ids)
+    shell:
+        """
+        cd {params.input_dir};
+        sudo docker run -it --rm -e WINEDEBUG=-all -v {params.input_dir}:/data chambm/pwiz-skyline-i-agree-to-the-vendor-licenses wine msconvert --mzML *.raw --filter="peakPicking true 1-q" --filter="demultiplex massError=10ppm optimization=overlap_only"
+        """
+
