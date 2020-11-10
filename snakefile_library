@@ -1,27 +1,3 @@
-'''
-Environment and software support:
-   java
-   msconvert
-   docker
-   encyclopedia-0.9.5-executable.jar
-
- Setting for workdir:
-/mnt/external/dia_data/
-    uniprot_human_25apr2019.fasta
-    uniprot_human_25apr2019.fasta.z2_nce33.dlib
-    Snakefile
-    bin /
-       encyclopedia-0.9.5-executable.jar
-    s-trap /
-       Library_Generation /
-           190529_Plasma_S-Trap_DIA_Window400_500_01.raw
-           190529_Plasma_S-Trap_DIA_Window500_600_01.raw
-           190529_Plasma_S-Trap_DIA_Window600_700_01.raw
-           190529_Plasma_S-Trap_DIA_Window700_800_01.raw
-           190529_Plasma_S-Trap_DIA_Window800_900_01.raw
-           190529_Plasma_S-Trap_DIA_Window900_1000_01.raw
-'''
-
 # Get library generation directory
 dir =  os.environ.get("Library_dir")
 
